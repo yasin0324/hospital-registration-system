@@ -5,7 +5,6 @@ import Login from '../view/Login.vue'
 import patientMain from '../view/patientMain.vue'
 import patientRegistration from '../view/patient/patientRegistration.vue'
 import registrationRecord from '../view/patient/registrationRecord.vue'
-import orderManage from '../view/patient/orderManage.vue'
 import doctorMain from '../view/doctorMain.vue'
 import workManage from '../view/doctor/workManage.vue' 
 import registrationManage from '../view/doctor/registrationManage.vue'
@@ -23,7 +22,6 @@ const routes = [
         children: [
             { path: 'registration', name: 'registration', component: patientRegistration },
             { path: 'record', name: 'record', component: registrationRecord },
-            { path: 'order', name: 'order', component: orderManage },
         ]
     },
     {

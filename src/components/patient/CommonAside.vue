@@ -34,12 +34,6 @@ export default {
           icon: "first-aid-kit",
         },
         {
-          path: "/patient/order",
-          name: "order",
-          label: "订单信息",
-          icon: "tickets",
-        },
-        {
           path: "/patient/record",
           name: "record",
           label: "挂号记录",

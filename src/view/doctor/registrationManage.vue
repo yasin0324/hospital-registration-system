@@ -140,7 +140,7 @@
           <template slot-scope="scope">
             <el-button
               v-for="item in scope.row.patientAppiontmentPationInfos"
-              :key="item"
+              :key="item.patientId"
               type="text"
               @click="patientCheck(item)"
               >{{ item.name }}</el-button
@@ -280,22 +280,22 @@ export default {
       patientVisible: false,
       inputOnOff: true,
       tableData: [
-        // {
-        //   patientAppiontmentPationInfos: [
-        //     {
-        //       age: "xxx",
-        //       appointmentStatus: "xxx",
-        //       gender: "xxx",
-        //       name: "xxx",
-        //       noShowNumber: "xxx",
-        //       registrationName: "xxx",
-        //       userName: "xxx",
-        //       appointmentId: "xxx",
-        //       patientId: "xxx",
-        //     },
-        //   ],
-        //   appointmentNumber: "xxx",
-        // },
+        {
+          patientAppiontmentPationInfos: [
+            {
+              age: "",
+              appointmentStatus: "",
+              gender: "",
+              name: "",
+              noShowNumber: "",
+              registrationName: "",
+              userName: "",
+              appointmentId: "",
+              patientId: "",
+            },
+          ],
+          appointmentNumber: "",
+        },
       ],
       patientInformation: {
         age: "",
@@ -399,11 +399,15 @@ export default {
       http({
         url: "/doctor/registration/check",
         method: "get",
-        params: this.date,
-      }).then((response) => {
-        this.tableData = response.data.data;
-        console.log(response.data.data);
-      });
+        params: { date: this.date },
+      })
+        .then((response) => {
+          this.tableData = response.data;
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
     checkTypes() {
       http({
@@ -419,10 +423,11 @@ export default {
         });
     },
     delType(item) {
+      console.log(item);
       http({
         url: "/doctor/registration/delete",
         method: "post",
-        data: item.id,
+        data: [item.id],
       })
         .then((response) => {
           this.checkTypes();

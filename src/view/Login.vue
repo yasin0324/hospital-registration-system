@@ -82,8 +82,19 @@
                 v-model="form.verify"
                 placeholder="请填写邮箱验证码"
               ></el-input>
-              <el-button type="primary" size="small" @click="getCode"
-                >获取</el-button
+              <el-button
+                v-if="verifyGet"
+                type="primary"
+                size="small"
+                @click="getCode"
+                >&nbsp;获取验证码&nbsp;
+              </el-button>
+              <el-button
+                v-if="verifyGet === false"
+                type="info"
+                size="small"
+                @click="getCode"
+                >重新获取({{ verifyTime }})</el-button
               >
             </el-form-item>
             <el-form-item>
@@ -100,12 +111,15 @@
 </template>
 
 <script>
+// import { set } from "vue";
 // import axios from "axios";
 import http from "../utils/request.js";
 
 export default {
   data() {
     return {
+      verifyTime: 10,
+      verifyGet: true,
       logindata: {
         username: "",
         password: "",
@@ -170,6 +184,16 @@ export default {
         });
     },
     getCode() {
+      this.verifyGet = false;
+      const timer = setInterval(() => {
+        this.verifyTime--;
+        if (this.verifyTime === 0) {
+          this.verifyGet = true;
+          clearTimeout(timer);
+          this.verifyTime = 10;
+        }
+      }, 1000);
+
       http({
         url: "/verify",
         method: "get",
@@ -249,7 +273,7 @@ export default {
           margin-right: 22px;
         }
         .verify {
-          margin-left: 40px;
+          margin-left: 88px;
           .el-input {
             width: 204px;
             margin-right: 2px;

@@ -29,6 +29,7 @@
         <el-button class="copy" type="primary" @click="copyVisible = true">
           复 制
         </el-button>
+        <el-button type="primary" @click="deliver">放号</el-button>
         <el-dialog
           class="copydialog"
           title="复制"
@@ -108,11 +109,10 @@
               <el-form-item label="排班名称："
                 >{{ item.templateName }}
               </el-form-item>
-              <el-form-item
-                v-for="type in item.registrationTypes"
-                :key="type.id"
-                label="挂号种类："
-                >{{ type.registrationName }}
+              <el-form-item label="挂号种类：">
+                <span v-for="type in item.registrationTypes" :key="type.id">
+                  {{ type.registrationName }}
+                </span>
               </el-form-item>
               <el-form-item label="上午问诊人数："
                 >{{ item.morningCheckNumber }}
@@ -141,16 +141,16 @@
                 </el-form-item>
                 <el-form-item label="挂号种类">
                   <el-select
-                    v-model="item.registrationTypes.id"
+                    v-model="item.registrationTypes"
                     multiple
                     placeholder="挂号种类"
                     style="width: 205px"
                   >
                     <el-option
                       v-for="item in workTypes"
-                      :key="item.id"
+                      :key="item.id + item.registrationName"
                       :label="item.registrationName"
-                      :value="item"
+                      :value="item.id"
                     ></el-option>
                   </el-select>
                 </el-form-item>
@@ -210,16 +210,16 @@
                 </el-form-item>
                 <el-form-item label="挂号种类">
                   <el-select
-                    v-model="workTemplate.registrationTypes.id"
+                    v-model="workTemplate.registrationTypes"
                     multiple
                     placeholder="请选择挂号种类"
                     style="width: 205px"
                   >
                     <el-option
                       v-for="item in workTypes"
-                      :key="item.id"
+                      :key="item.registrationName"
                       :label="item.registrationName"
-                      :value="item"
+                      :value="item.id"
                     ></el-option>
                   </el-select>
                 </el-form-item>
@@ -235,7 +235,7 @@
     </el-header>
     <el-main>
       <el-table :data="tableData" style="width: 100%" max-height="687px">
-        <el-table-column prop="data" label="日期" width="230">
+        <el-table-column prop="date" label="日期" width="230">
         </el-table-column>
         <el-table-column
           prop="registrationTypes"
@@ -268,12 +268,22 @@
         ></el-table-column>
         <el-table-column fixed="right" label="操作" width="250">
           <template slot-scope="scope">
-            <el-button @click="update(scope.row)" type="primary"
+            <el-button
+              @click="update(scope.row)"
+              type="primary"
+              v-if="scope.row.deliver === 0"
               >修改
             </el-button>
-            <el-button @click="getDate(scope.row)" size="small"
+            <el-button type="info" v-if="scope.row.deliver === 1"
+              >修改
+            </el-button>
+            <el-button
+              @click="getDate(scope.row)"
+              size="small"
+              style="margin-right: 5px"
               >选择模板
             </el-button>
+            <span v-if="scope.row.deliver === 1">已放号</span>
           </template>
         </el-table-column>
       </el-table>
@@ -285,7 +295,7 @@
             </el-form-item>
             <el-form-item
               v-for="type in item.registrationTypes"
-              :key="type.id"
+              :key="type.registrationName"
               label="挂号种类："
               >{{ type.registrationName }}
             </el-form-item>
@@ -321,7 +331,7 @@
           </el-form-item>
           <el-form-item label="挂号种类">
             <el-select
-              v-model="toUpdate.registrationTypes.id"
+              v-model="toUpdate.registrationTypes"
               multiple
               placeholder="请选择挂号种类"
               style="width: 205px"
@@ -330,7 +340,7 @@
                 v-for="item in workTypes"
                 :key="item.id"
                 :label="item.registrationName"
-                :value="item"
+                :value="item.id"
               ></el-option>
             </el-select>
           </el-form-item>
@@ -366,24 +376,40 @@ export default {
       choseVisible: false,
       updateVisible: false,
       tableData: [
-        // {
-        //   data: "",
-        //   doctorId: "",
-        //   morningCheckNumber: "",
-        //   afternoonCheckNumber: "",
-        //   registrationTypes: [
-        //     {
-        //       id: "",
-        //       registrationName: "",
-        //       count: "",
-        //       estimatedTime: "",
-        //     },
-        //   ],
-        // },
+        {
+          data: "",
+          doctorId: "",
+          morningCheckNumber: "",
+          afternoonCheckNumber: "",
+          deliver: 0,
+          registrationTypes: [
+            {
+              id: "",
+              registrationName: "",
+              count: "",
+              estimatedTime: "",
+            },
+          ],
+        },
+        {
+          data: "",
+          doctorId: "",
+          morningCheckNumber: "",
+          afternoonCheckNumber: "",
+          deliver: 1,
+          registrationTypes: [
+            {
+              id: "",
+              registrationName: "",
+              count: "",
+              estimatedTime: "",
+            },
+          ],
+        },
       ],
       toUpdate: {
         afternoonCheckNumber: "",
-        data: "",
+        date: "",
         morningCheckNumber: "",
         doctorId: "",
         registrationTypes: [
@@ -409,26 +435,51 @@ export default {
         ],
       },
       workTypes: [
-        { id: "", registrationName: "", count: "", estimatedTime: "" },
+        { id: "1", registrationName: "111", count: "", estimatedTime: "" },
+        { id: "2", registrationName: "222", count: "", estimatedTime: "" },
       ],
       orderTemplate: [
-        // {
-        //   afternoonCheckNumber: "",
-        //   morningCheckNumber: "",
-        //   doctorId: "",
-        //   id: "",
-        //   templateName: "",
-        //   registrationTypes: [
-        //     {
-        //       count: "",
-        //       estimatedTime: "",
-        //       id: "",
-        //       registrationName: "",
-        //     },
-        //   ],
-        // },
+        {
+          afternoonCheckNumber: "",
+          morningCheckNumber: "",
+          doctorId: "",
+          id: "",
+          templateName: "",
+          registrationTypes: [
+            {
+              count: "",
+              estimatedTime: "",
+              id: "",
+              registrationName: "",
+            },
+          ],
+        },
       ],
     };
+  },
+  computed: {
+    typesComputed: function () {
+      let temp = [];
+      for (const item of this.workTemplate.registrationTypes) {
+        for (const item2 of this.workTypes) {
+          if (item2.id === item) {
+            temp.push(item2);
+          }
+        }
+      }
+      return temp;
+    },
+    typesComputed2: function () {
+      let temp = [];
+      for (const item of this.toUpdate.registrationTypes) {
+        for (const item2 of this.workTypes) {
+          if (item2.id === item) {
+            temp.push(item2);
+          }
+        }
+      }
+      return temp;
+    },
   },
   mounted() {
     this.workCheck();
@@ -443,6 +494,9 @@ export default {
       this.choseVisible = true;
     },
     addTemplate() {
+      this.workTemplate.registrationTypes = this.typesComputed;
+      console.log(this.typesComputed);
+      console.log(this.workTemplate.registrationTypes);
       http({
         url: "/doctor/template/add",
         method: "post",
@@ -454,13 +508,9 @@ export default {
         },
       })
         .then((response) => {
-          if (response.data.code === 200) {
-            alert("添加成功");
-            this.checkTemplates();
-            this.addVisible = false;
-          } else {
-            alert("添加失败，请重试");
-          }
+          console.log(response);
+          this.checkTemplates();
+          this.addVisible = false;
         })
         .catch((error) => {
           console.log(error);
@@ -508,25 +558,28 @@ export default {
         });
     },
     upTemplate(item) {
-      http({
-        url: "doctor/template/update",
-        method: "post",
-        data: {
-          id: item.id,
-          templateName: item.templateName,
-          morningCheckNumber: item.morningCheckNumber,
-          afternoonCheckNumber: item.afternoonCheckNumber,
-          registrationTypes: item.registrationTypes,
-        },
-      })
-        .then((response) => {
-          this.checkTemplates();
-          console.log(response);
-          this.upVisible = false;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      this.workTemplate = item;
+      this.workTemplate.registrationTypes = this.typesComputed;
+      this.checkTemplates();
+      // http({
+      //   url: "doctor/template/update",
+      //   method: "post",
+      //   data: {
+      //     id: item.id,
+      //     templateName: item.templateName,
+      //     morningCheckNumber: item.morningCheckNumber,
+      //     afternoonCheckNumber: item.afternoonCheckNumber,
+      //     registrationTypes: item.registrationTypes,
+      //   },
+      // })
+      //   .then((response) => {
+      //     this.checkTemplates();
+      //     console.log(response);
+      //     this.upVisible = false;
+      //   })
+      //   .catch((error) => {
+      //     console.log(error);
+      //   });
     },
     chose(item) {
       http({
@@ -547,20 +600,21 @@ export default {
     },
     update(row) {
       console.log(row);
-      this.choseDate = row.data;
+      this.choseDate = row.date;
       console.log(this.choseDate);
       this.toUpdate = row;
       this.updateVisible = true;
     },
     updateWork() {
+      this.toUpdate.registrationTypes = this.typesComputed2;
       http({
-        url: "/doctor/schdule/set",
+        url: "/doctor/schedule/set",
         method: "post",
         data: {
           afternoonCheckNumber: this.toUpdate.afternoonCheckNumber,
           data: this.choseDate,
           morningCheckNumber: this.toUpdate.morningCheckNumber,
-          registrationType_Ids: this.toUpdate.registrationTypes,
+          registrationTypes: this.toUpdate.registrationTypes,
         },
       });
     },
@@ -592,7 +646,7 @@ export default {
       })
         .then((response) => {
           for (let i = 0; i < response.data.data.length; i++) {
-            if (response.data.data[i].data === this.date) {
+            if (response.data.data[i].date === this.date) {
               let temp = [];
               for (let j = 0; j < 14; j++) {
                 temp[j] = response.data.data[i];
@@ -687,6 +741,12 @@ export default {
       this.checkTemplates();
       this.copyVisible = false;
     },
+    deliver() {
+      http({
+        url: "/doctor/registration/deliver",
+        method: "get",
+      });
+    },
   },
 };
 </script>
@@ -726,12 +786,11 @@ export default {
 }
 .date {
   .copy {
-    margin-left: 50px;
+    margin: 0 50px;
   }
   .copydialog {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
     .copy {
       margin: 5px 0;
       .el-button {

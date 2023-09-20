@@ -1,14 +1,14 @@
 <template>
   <div class="header-container">
-    <img
-      class="picture"
-      src="../../image/hospital-icon.jpeg"
-      height="50px"
-      width="50px"
-    />
     <div class="information">
+      <img
+        class="picture"
+        src="../../image/hospital-icon.jpeg"
+        height="50px"
+        width="50px"
+      />
       <el-button type="text" @click="Visible = true">个人信息</el-button>
-      <el-dialog :visible.sync="Visible">
+      <el-dialog :visible.sync="Visible" width="30%">
         <el-card class="box-card">
           <div slot="header" class="clearfix">
             <span>个人信息</span>
@@ -45,7 +45,7 @@
         <el-dialog
           title="编辑"
           :visible.sync="dialogVisible1"
-          width="40%"
+          width="30%"
           append-to-body
         >
           <el-form label-width="80px" :inline="true">
@@ -339,7 +339,8 @@ export default {
     margin: 5px 10px;
   }
   .information {
-    margin-left: -560px;
+    display: flex;
+    align-items: center;
   }
   .other {
     margin-right: 10px;
