@@ -165,6 +165,7 @@
             </el-form-item>
             <el-form-item label="密码" prop="password">
               <el-input
+                type="password"
                 v-model="form.password"
                 placeholder="请设置密码"
               ></el-input>
@@ -175,8 +176,19 @@
                 v-model="form.emailAddress"
                 placeholder="请输入邮箱"
               ></el-input>
-              <el-button @click="getCode" type="primary" size="small"
+              <el-button
+                @click="getCode"
+                type="primary"
+                size="small"
+                v-if="verifyGet"
                 >获取验证码</el-button
+              >
+              <el-button
+                v-if="verifyGet === false"
+                type="info"
+                size="small"
+                @click="getCode"
+                >重新获取({{ verifyTime }})</el-button
               >
             </el-form-item>
             <el-form-item label="验证码" prop="verify">
@@ -200,11 +212,13 @@
 </template>
 
 <script>
-import http from "../../utils/request";
+import http from "../../api/request";
 
 export default {
   data() {
     return {
+      verifyGet: true,
+      verifyTime: 60,
       Visible: false,
       dialogVisible1: false,
       Information: {
@@ -255,7 +269,7 @@ export default {
   methods: {
     getInformation() {
       http({
-        url: "doctor/queryInfo",
+        url: "/doctor/queryInfo",
         method: "get",
       })
         .then((response) => {
@@ -274,6 +288,27 @@ export default {
       })
         .then((response) => {
           console.log(response);
+          // if (response.data.code === 500) {
+          //   this.$message.error({
+          //     message: response.data.msg,
+          //     diration: 1500,
+          //   });
+          // }
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+          this.getInformation();
           this.dialogVisible1 = false;
         })
         .catch((error) => {
@@ -302,6 +337,21 @@ export default {
         },
       })
         .then((response) => {
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+            this.dialogFormVisible2 = false;
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -309,6 +359,15 @@ export default {
         });
     },
     getCode() {
+      this.verifyGet = false;
+      const timer = setInterval(() => {
+        this.verifyTime--;
+        if (this.verifyTime === 0) {
+          this.verifyGet = true;
+          clearInterval(timer);
+          this.verifyTime = 60;
+        }
+      }, 1000);
       http({
         url: "verify",
         method: "get",
@@ -317,6 +376,29 @@ export default {
         },
       })
         .then((response) => {
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+          this.verifyGet = false;
+          const timer = setInterval(() => {
+            this.verifyTime--;
+            if (this.verifyTime === 0) {
+              this.verifyGet = true;
+              clearInterval(timer);
+              this.verifyTime = 60;
+            }
+          }, 1000);
           console.log(response);
         })
         .catch((response) => {

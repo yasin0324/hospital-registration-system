@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-menu default-active="registration" class="el-menu-vertical-demo">
+    <el-menu router class="el-menu-vertical-demo">
       <!-- <el-menu-item index="2">
         <i class="el-icon-first-aid-kit"></i>
         <span slot="title">挂号模块</span>
@@ -10,10 +10,9 @@
         <span slot="title">挂号记录 </span>
       </el-menu-item> -->
       <el-menu-item
-        @click="clickMenu(item)"
         v-for="item in menuData"
         :key="item.name"
-        :index="item.name + ''"
+        :index="item.path"
       >
         <i :class="`el-icon-${item.icon}`"></i>
         <span slot="title">{{ item.label }}</span>
@@ -41,16 +40,6 @@ export default {
         },
       ],
     };
-  },
-  methods: {
-    clickMenu(item) {
-      if (
-        this.$route.path !== item.path &&
-        !(this.$route.path === "/registration" && item.path === "/")
-      ) {
-        this.$router.push(item.path);
-      }
-    },
   },
 };
 </script>

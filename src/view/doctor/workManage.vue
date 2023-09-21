@@ -271,10 +271,10 @@
             <el-button
               @click="update(scope.row)"
               type="primary"
-              v-if="scope.row.deliver === 0"
+              v-if="scope.row.deliverOrNot === 0"
               >修改
             </el-button>
-            <el-button type="info" v-if="scope.row.deliver === 1"
+            <el-button type="info" v-if="scope.row.deliverOrNot === 1"
               >修改
             </el-button>
             <el-button
@@ -283,7 +283,7 @@
               style="margin-right: 5px"
               >选择模板
             </el-button>
-            <span v-if="scope.row.deliver === 1">已放号</span>
+            <span v-if="scope.row.deliverOrNot === 1">已放号</span>
           </template>
         </el-table-column>
       </el-table>
@@ -355,7 +355,7 @@
 </template>
 
 <script>
-import http from "../../utils/request";
+import http from "../../api/request";
 export default {
   data() {
     return {
@@ -381,7 +381,7 @@ export default {
           doctorId: "",
           morningCheckNumber: "",
           afternoonCheckNumber: "",
-          deliver: 0,
+          deliverOrNot: "",
           registrationTypes: [
             {
               id: "",
@@ -396,7 +396,7 @@ export default {
           doctorId: "",
           morningCheckNumber: "",
           afternoonCheckNumber: "",
-          deliver: 1,
+          deliverOrNot: "",
           registrationTypes: [
             {
               id: "",
@@ -489,7 +489,7 @@ export default {
   methods: {
     getDate(row) {
       // console.log(row);
-      this.choseDate = row.data;
+      this.choseDate = row.date;
       // console.log(this.choseDate);
       this.choseVisible = true;
     },
@@ -511,6 +511,20 @@ export default {
           console.log(response);
           this.checkTemplates();
           this.addVisible = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -552,6 +566,20 @@ export default {
           console.log(this.orderTemplate, response);
           this.checkTemplates();
           console.log(this.orderTemplate);
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -561,25 +589,39 @@ export default {
       this.workTemplate = item;
       this.workTemplate.registrationTypes = this.typesComputed;
       this.checkTemplates();
-      // http({
-      //   url: "doctor/template/update",
-      //   method: "post",
-      //   data: {
-      //     id: item.id,
-      //     templateName: item.templateName,
-      //     morningCheckNumber: item.morningCheckNumber,
-      //     afternoonCheckNumber: item.afternoonCheckNumber,
-      //     registrationTypes: item.registrationTypes,
-      //   },
-      // })
-      //   .then((response) => {
-      //     this.checkTemplates();
-      //     console.log(response);
-      //     this.upVisible = false;
-      //   })
-      //   .catch((error) => {
-      //     console.log(error);
-      //   });
+      http({
+        url: "doctor/template/update",
+        method: "post",
+        data: {
+          id: item.id,
+          templateName: item.templateName,
+          morningCheckNumber: item.morningCheckNumber,
+          afternoonCheckNumber: item.afternoonCheckNumber,
+          registrationTypes: item.registrationTypes,
+        },
+      })
+        .then((response) => {
+          this.checkTemplates();
+          console.log(response);
+          this.upVisible = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
     chose(item) {
       http({
@@ -591,8 +633,23 @@ export default {
         },
       })
         .then((response) => {
+          this.workCheck();
           console.log(response);
           this.choseVisible = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -616,7 +673,30 @@ export default {
           morningCheckNumber: this.toUpdate.morningCheckNumber,
           registrationTypes: this.toUpdate.registrationTypes,
         },
-      });
+      })
+        .then((response) => {
+          if (response.data.code === 500) {
+            this.workCheck();
+          }
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+          this.updateVisible = false;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
     registrationName(row) {
       let arr = [];
@@ -645,6 +725,7 @@ export default {
         method: "get",
       })
         .then((response) => {
+          console.log(response.data);
           for (let i = 0; i < response.data.data.length; i++) {
             if (response.data.data[i].date === this.date) {
               let temp = [];
@@ -694,6 +775,20 @@ export default {
         },
       })
         .then((response) => {
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -712,6 +807,20 @@ export default {
         },
       })
         .then((response) => {
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -728,6 +837,20 @@ export default {
         },
       })
         .then((response) => {
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -745,7 +868,28 @@ export default {
       http({
         url: "/doctor/registration/deliver",
         method: "get",
-      });
+      })
+        .then((response) => {
+          this.workCheck();
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+          console.log(response);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
   },
 };

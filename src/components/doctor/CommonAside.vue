@@ -1,8 +1,7 @@
 <template>
   <div>
-    <el-menu default-active="workManage" class="el-menu-vertical-demo">
+    <el-menu router class="el-menu-vertical-demo">
       <el-menu-item
-        @click="clickMenu(item)"
         v-for="item in menuData"
         :key="item.name"
         :index="item.name + ''"
@@ -33,16 +32,6 @@ export default {
         },
       ],
     };
-  },
-  methods: {
-    clickMenu(item) {
-      if (
-        this.$route.path !== item.path &&
-        !(this.$route.path === "/information" && item.path === "/")
-      ) {
-        this.$router.push(item.path);
-      }
-    },
   },
 };
 </script>

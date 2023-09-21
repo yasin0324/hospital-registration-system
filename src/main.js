@@ -4,10 +4,9 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css';
 import router from './router'
 import moment from 'moment'
-import api from './api'
+import store from './store'
 
 Vue.prototype.$moment = moment
-Vue.prototype.$api=api
 
 Vue.use(ElementUI);
 
@@ -33,8 +32,18 @@ Vue.prototype.dateTypeFormat = function(fmt, date) {
   return fmt
 }
 
+router.beforeEach((to, from, next) => {
+    if (to.path === '/') return next();
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('请先登录');
+        return next('/');
+    }
+    next()
+})
 
 new Vue({
   router,
   render: h => h(App),
+  store,
 }).$mount('#app')

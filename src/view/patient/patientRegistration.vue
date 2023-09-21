@@ -21,6 +21,13 @@
         >
         </el-date-picker>
       </div>
+      <div class="nameSearch">
+        <el-input
+          class="inline-input"
+          v-model="doctorSearch"
+          placeholder="搜索医生姓名"
+        ></el-input>
+      </div>
       <div class="search">
         <el-button type="primary" icon="el-icon-search" @click="search"
           >查询</el-button
@@ -28,18 +35,13 @@
       </div>
     </el-header>
     <el-main>
-      <el-table
-        :data="doctor"
-        v-for="item in doctor"
-        :key="item.id"
-        style="width: 100%"
-      >
+      <el-table :data="doctor" style="width: 100%">
         <el-table-column label="医生">
           <template slot-scope="scope">
             <el-button
               type="text"
-              @click="(dialogFormVisible = true), checkcheck(scope.low)"
-              >{{ item.name }}</el-button
+              @click="(dialogFormVisible = true), checkcheck(scope.row)"
+              >{{ scope.row.name }}</el-button
             >
             <el-dialog
               title="医生信息"
@@ -53,22 +55,22 @@
                 <div class="text item">
                   <el-form>
                     <el-form-item label="姓名">
-                      <span>{{ item.name }}</span>
+                      <span>{{ doctorInformation.name }}</span>
                     </el-form-item>
                     <el-form-item label="年龄">
-                      <span>{{ item.age }}</span>
+                      <span>{{ doctorInformation.age }}</span>
                     </el-form-item>
                     <el-form-item label="性别">
-                      <span>{{ item.gender }}</span>
+                      <span>{{ doctorInformation.gender }}</span>
                     </el-form-item>
                     <el-form-item label="科室">
-                      <span>{{ item.section }}</span>
+                      <span>{{ doctorInformation.section }}</span>
                     </el-form-item>
                     <el-form-item label="擅长方向">
-                      <span>{{ item.specializedField }}</span>
+                      <span>{{ doctorInformation.specializedField }}</span>
                     </el-form-item>
                     <el-form-item label="职位">
-                      <span>{{ item.position }}</span>
+                      <span>{{ doctorInformation.position }}</span>
                     </el-form-item>
                   </el-form>
                 </div>
@@ -78,7 +80,10 @@
         </el-table-column>
         <el-table-column label="科室" prop="section"></el-table-column>
         <el-table-column label="职位" prop="position"></el-table-column>
-        <el-table-column label="擅长方向" prop="position"></el-table-column>
+        <el-table-column
+          label="擅长方向"
+          prop="specializedField"
+        ></el-table-column>
         <el-table-column fixed="right" label="操作" width="100">
           <template slot-scope="scope">
             <el-button
@@ -112,26 +117,35 @@
                   v-model="orderChose.choiceTime"
                   placeholder="请选择时间段"
                 >
-                  <el-option :label="timedata.nineten" value="9-10"></el-option>
+                  <el-option
+                    :label="timedata.nineten"
+                    value="9-10"
+                    :disabled="this.doctorChoice.nineTen === 0"
+                  ></el-option>
                   <el-option
                     :label="timedata.teneleven"
                     value="10-11"
+                    :disabled="this.doctorChoice.tenEleven === 0"
                   ></el-option>
                   <el-option
                     :label="timedata.eleventwelve"
                     value="11-12"
+                    :disabled="this.doctorChoice.elevenTwelve === 0"
                   ></el-option>
                   <el-option
                     :label="timedata.fourteenfifteen"
                     value="14-15"
+                    :disabled="this.doctorChoice.fourteenFifteen === 0"
                   ></el-option>
                   <el-option
                     :label="timedata.fifteensixteen"
                     value="15-16"
+                    :disabled="this.doctorChoice.fifteenSixteen === 0"
                   ></el-option>
                   <el-option
                     :label="timedata.sixteenseventeen"
                     value="16-17"
+                    :disabled="this.doctorChoice.sixteenSeventeen === 0"
                   ></el-option>
                 </el-select>
               </el-form-item>
@@ -149,21 +163,56 @@
 </template>
 
 <script>
-import http from "../../utils/request";
+import http from "../../api/request";
 export default {
   data() {
     return {
+      doctorSearch: "",
       options1: [
         {
           value: "内科",
           label: "内科",
         },
+        {
+          value: "外科",
+          label: "外科",
+        },
+        {
+          value: "骨科",
+          label: "骨科",
+        },
+        {
+          value: "烧伤科",
+          label: "烧伤科",
+        },
+        {
+          value: "临床",
+          label: "临床",
+        },
       ],
       val: "",
       doctor: [
         {
+          id: "13",
+          name: "王华",
+          age: "",
+          gender: "",
+          section: "11",
+          specializedField: "",
+          position: "",
+        },
+        {
+          id: "14",
+          name: "张三",
+          age: "",
+          gender: "",
+          section: "",
+          specializedField: "",
+          position: "",
+        },
+        {
           id: "",
-          name: "",
+          name: "3",
           age: "",
           gender: "",
           section: "",
@@ -171,6 +220,15 @@ export default {
           position: "",
         },
       ],
+      doctorInformation: {
+        id: "",
+        name: "1",
+        age: "",
+        gender: "",
+        section: "11",
+        specializedField: "",
+        position: "",
+      },
       loading: false,
       dialogVisible: false,
       dialogFormVisible: false,
@@ -235,7 +293,9 @@ export default {
     this.getdata();
   },
   methods: {
-    checkcheck() {},
+    checkcheck(row) {
+      this.doctorInformation = row;
+    },
     doctorChose(row) {
       console.log(row);
       this.registrationVisible = true;
@@ -243,7 +303,7 @@ export default {
       // this.orderChose.doctorId = row.id;
       // this.orderChose.section = row.section;
       http({
-        url: "/patient/choice/13",
+        url: `/patient/choice/${row.id}`,
         method: "get",
         params: row.doctorId,
       })
@@ -268,24 +328,41 @@ export default {
       this.getdata();
     },
     getdata() {
+      this.$store.commit("getInformation1", this.doctor);
+      console.log(this.$store.state.tab.doctor);
       http({
         url: "/patient/registration/check",
         method: "post",
         data: {
           date: this.date,
           section: this.section,
+          doctorName: this.doctorSearch,
         },
       })
         .then((response) => {
+          console.log(response.data.data);
           this.doctor = response.data.data;
+          this.$store.commit("getInformation1", this.doctor);
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
         });
     },
     orderSubmit() {
-      console.log(this.orderChose.registrationTypeId);
-      console.log(this.orderChose);
       http({
         url: "/patient/choice/time",
         method: "post",
@@ -294,6 +371,20 @@ export default {
         .then((response) => {
           console.log(response);
           this.registrationVisible = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
         })
         .catch((error) => {
           console.log(error);

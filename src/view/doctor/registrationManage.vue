@@ -133,7 +133,7 @@
       </div>
     </el-header>
     <el-main>
-      <el-table :data="tableData" style="width: 100%" max-height="250">
+      <el-table :data="tableData" style="width: 100%">
         <el-table-column prop="appointmentNumber" label="预约时间">
         </el-table-column>
         <el-table-column prop="patientAppiontmentPationInfos" label="姓名">
@@ -228,9 +228,8 @@
                   style="width: 204px"
                   @change="showStatus"
                 >
-                  <el-option label="已预约" value="已预约"></el-option>
-                  <el-option label="已完成" value="已完成"></el-option>
-                  <el-option label="已失约" value="已失约"></el-option>
+                  <el-option label="已完成" value="visited"></el-option>
+                  <el-option label="已失约" value="noVisited"></el-option>
                 </el-select>
               </el-form-item>
             </el-form>
@@ -253,7 +252,7 @@
                   label="医生名称"
                 ></el-table-column>
                 <el-table-column
-                  prop="registationStatus"
+                  prop="statusName"
                   label="预约状态"
                 ></el-table-column>
               </el-table>
@@ -266,7 +265,7 @@
 </template>
 
 <script>
-import http from "../../utils/request";
+import http from "../../api/request";
 
 export default {
   data() {
@@ -286,7 +285,7 @@ export default {
               age: "",
               appointmentStatus: "",
               gender: "",
-              name: "",
+              name: "xxx",
               noShowNumber: "",
               registrationName: "",
               userName: "",
@@ -329,6 +328,7 @@ export default {
           registrationTime: "",
           registratiionTypeId: "",
           section: "",
+          statusName: "",
         },
       ],
     };
@@ -354,6 +354,20 @@ export default {
         .then((response) => {
           this.inputOnOff = true;
           this.save = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -381,13 +395,30 @@ export default {
         });
     },
     patientCheck(item) {
+      console.log(item.patientId);
       http({
-        url: "/doctor/query/patient/appointment/1",
+        url: `/doctor/query/patient/appointment/${item.patientId}`,
         method: "get",
+        params: { patientId: item.patientId },
       })
         .then((response) => {
           console.log(response.data.data);
           this.appointment = response.data.data;
+          for (const item in this.appointment) {
+            if (item.appointmentStatus === "unpaid") {
+              item.statusName = "未支付";
+            } else if (item.appointmentStatus === "waiting") {
+              item.statusName = "待问诊";
+            } else if (item.appointmentStatus === "visited") {
+              item.statusName = "已完成";
+            } else if (item.appointmentStatus === "novisited") {
+              item.statusName = "已失约";
+            } else if (item.appointmentStatus === "stopped") {
+              item.statusName = "已终止";
+            } else if (item.appointmentStatus === "canceled") {
+              item.statusName = "已取消";
+            }
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -402,7 +433,7 @@ export default {
         params: { date: this.date },
       })
         .then((response) => {
-          this.tableData = response.data;
+          this.tableData = response.data.data;
           console.log(response.data);
         })
         .catch((error) => {
@@ -431,6 +462,20 @@ export default {
       })
         .then((response) => {
           this.checkTypes();
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -445,6 +490,20 @@ export default {
       })
         .then((response) => {
           this.updateTypeV = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -460,6 +519,20 @@ export default {
         .then((response) => {
           this.checkTypes();
           this.addTypeV = false;
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {
@@ -497,7 +570,19 @@ export default {
     appointmentStatus(row) {
       let arr = [];
       row.patientAppiontmentPationInfos.forEach((item) => {
-        arr.push(item.appointmentStatus);
+        if (item.appointmentStatus === "unpaid") {
+          arr.push("未支付");
+        } else if (item.appointmentStatus === "waiting") {
+          arr.push("待问诊");
+        } else if (item.appointmentStatus === "visited") {
+          arr.push("已完成");
+        } else if (item.appointmentStatus === "novisited") {
+          arr.push("已失约");
+        } else if (item.appointmentStatus === "stopped") {
+          arr.push("已终止");
+        } else if (item.appointmentStatus === "canceled") {
+          arr.push("已取消");
+        }
       });
       return arr.join(",");
     },

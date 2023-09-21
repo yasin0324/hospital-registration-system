@@ -113,12 +113,12 @@
 <script>
 // import { set } from "vue";
 // import axios from "axios";
-import http from "../utils/request.js";
+import http from "../api/request.js";
 
 export default {
   data() {
     return {
-      verifyTime: 10,
+      verifyTime: 60,
       verifyGet: true,
       logindata: {
         username: "",
@@ -176,6 +176,20 @@ export default {
               this.$router.push("/doctor");
             }
           }
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response.data.data.token);
           // console.log(response.data.data.identity);
         })
@@ -184,15 +198,15 @@ export default {
         });
     },
     getCode() {
-      this.verifyGet = false;
-      const timer = setInterval(() => {
-        this.verifyTime--;
-        if (this.verifyTime === 0) {
-          this.verifyGet = true;
-          clearTimeout(timer);
-          this.verifyTime = 10;
-        }
-      }, 1000);
+      // this.verifyGet = false;
+      // const timer = setInterval(() => {
+      //   this.verifyTime--;
+      //   if (this.verifyTime === 0) {
+      //     this.verifyGet = true;
+      //     clearInterval(timer);
+      //     this.verifyTime = 10;
+      //   }
+      // }, 1000);
 
       http({
         url: "/verify",
@@ -202,6 +216,29 @@ export default {
         },
       })
         .then((response) => {
+          this.verifyGet = false;
+          const timer = setInterval(() => {
+            this.verifyTime--;
+            if (this.verifyTime === 0) {
+              this.verifyGet = true;
+              clearInterval(timer);
+              this.verifyTime = 10;
+            }
+          }, 1000);
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((response) => {
@@ -209,12 +246,35 @@ export default {
         });
     },
     register() {
+      console.log(this.form);
       http({
-        url: "/paitent/register",
+        url: "/patient/register",
         method: "post",
-        data: this.form,
+        data: {
+          name: this.form.name,
+          userName: this.form.userName,
+          password: this.form.password,
+          age: this.form.age,
+          gender: this.form.gender,
+          verify: this.form.verify,
+          emailAddress: this.form.emailAddress,
+        },
       })
         .then((response) => {
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
           console.log(response);
         })
         .catch((error) => {

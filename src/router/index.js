@@ -9,6 +9,8 @@ import doctorMain from '../view/doctorMain.vue'
 import workManage from '../view/doctor/workManage.vue' 
 import registrationManage from '../view/doctor/registrationManage.vue'
 
+Vue.use(VueRouter)
+
 const routes = [
     {
         path: '/',
@@ -42,5 +44,3 @@ const router = new VueRouter({
 })
 
 export default router
-
-Vue.use(VueRouter)

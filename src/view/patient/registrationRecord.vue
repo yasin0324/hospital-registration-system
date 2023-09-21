@@ -1,38 +1,66 @@
 <template>
   <div class="main">
     <el-card
-      v-for="item in dataSee"
-      :key="item.registrationTime"
+      v-for="(item, index) in history"
+      :key="item.oddNumber"
       shadow="hover"
     >
+      <div slot="header" class="clearfix">
+        <span>订单号：{{ item.oddNumber }}</span>
+      </div>
       <div class="time test">挂号时间：{{ item.registrationTime }}</div>
       <div class="name test">医生姓名：{{ item.doctorName }}</div>
       <div class="section test">科室：{{ item.section }}</div>
-      <div class="type test">挂号种类:{{ item.registrationName }}</div>
+      <div class="type test">
+        挂号种类:{{ item.registrationTypes[0].registrationName }}
+      </div>
       <div class="status test">
         <el-button
           class="sta"
-          type="info"
-          v-if="gopay && item.registrationStatus === 'topay'"
-          @click="gopay = false"
-          >未支付</el-button
+          v-if="item.gopay === false && item.registrationStatus === 'unpaid'"
+          @click="goPay(item)"
+          >未支付({{ countdown1[index] }})</el-button
         >
         <el-button
-          v-if="gopay === false && item.registrationStatus === 'topay'"
-          @click="cancel"
+          v-if="item.gopay && item.registrationStatus === 'unpaid'"
+          @click="cancel(item)"
           >取消预约</el-button
         >
         <el-button
-          v-if="gopay === false && item.registrationStatus === 'topay'"
+          v-if="item.gopay && item.registrationStatus === 'unpaid'"
           type="primary"
-          @click="confirm"
+          @click="confirm(item)"
           >确认付款</el-button
         >
         <el-button
           class="sta"
+          type="primary"
+          v-if="item.registrationStatus === 'waiting'"
+          >待问诊</el-button
+        >
+        <el-button
+          class="sta"
           type="success"
-          v-if="item.registrationStatus === 'payed'"
+          v-if="item.registrationStatus === 'visited'"
           >已完成</el-button
+        >
+        <el-button
+          class="sta"
+          type="info"
+          v-if="item.registrationStatus === 'noVisited'"
+          >已失约</el-button
+        >
+        <el-button
+          class="sta"
+          type="info"
+          v-if="item.registrationStatus === 'stopped'"
+          >已终止</el-button
+        >
+        <el-button
+          class="sta"
+          type="info"
+          v-if="item.registrationStatus === 'canceled'"
+          >已取消</el-button
         >
       </div>
     </el-card>
@@ -40,60 +68,69 @@
 </template>
 
 <script>
-import http from "../../utils/request";
+import http from "../../api/request";
 
 export default {
   data() {
     return {
       history: [
-        {
-          doctorName: "",
-          registrationStatus: "topay",
-          registrationTime: "1",
-          registrationTypeId: 1,
-          section: "",
-          registrationName: "",
-        },
-        {
-          doctorName: "",
-          registrationStatus: "payed",
-          registrationTime: "2",
-          registrationTypeId: 2,
-          section: "",
-          registrationName: "",
-        },
-        {
-          doctorName: "",
-          registrationStatus: "payed",
-          registrationTime: "3",
-          registrationTypeId: 1,
-          section: "",
-          registrationName: "",
-        },
-        {
-          doctorName: "",
-          registrationStatus: "payed",
-          registrationTime: "4",
-          registrationTypeId: "",
-          section: "",
-          registrationName: "",
-        },
-        {
-          doctorName: "",
-          registrationStatus: "payed",
-          registrationTime: "5",
-          registrationTypeId: "",
-          section: "",
-          registrationName: "",
-        },
-        {
-          doctorName: "",
-          registrationStatus: "payed",
-          registrationTime: "6",
-          registrationTypeId: "",
-          section: "",
-          registrationName: "",
-        },
+        // {
+        //   oddNumber: "",
+        //   id: "",
+        //   doctorName: "张三",
+        //   doctorId: "",
+        //   patientId: "",
+        //   registrationStatus: "unpaid",
+        //   gopay: true,
+        //   registrationTime: "",
+        //   lastTime: 15,
+        //   countDown: "",
+        //   section: "",
+        //   registrationTypes: [
+        //     {
+        //       count: "",
+        //       estimatedTime: "",
+        //       id: "",
+        //       registrationName: "",
+        //     },
+        //   ],
+        // },
+        // {
+        //   id: "",
+        //   doctorName: "王华",
+        //   patientId: "",
+        //   registrationStatus: "unpaid",
+        //   registrationTime: "",
+        //   lastTime: 10,
+        //   countDown: "",
+        //   section: "",
+        //   registrationTypes: [
+        //     {
+        //       count: "",
+        //       estimatedTime: "",
+        //       id: "",
+        //       registrationName: "",
+        //     },
+        //   ],
+        // },
+        // {
+        //   id: "",
+        //   doctorName: "",
+        //   patientId: "",
+        //   registrationStatus: "unpaid",
+        //   registrationTime: "",
+        //   lastTime: 5,
+        //   countDown: "",
+        //   section: "",
+        //   registrationTypes: [
+        //     {
+        //       count: "",
+        //       estimatedTime: "",
+        //       id: "",
+        //       registrationName: "",
+        //     },
+        //   ],
+        // },
       ],
       types: [
         {
@@ -109,27 +146,69 @@ export default {
           estimatedTime: "",
         },
       ],
-      gopay: true,
     };
-  },
-  computed: {
-    dataSee: function () {
-      let temp = [{}];
-      for (const item1 of this.history) {
-        for (const item2 of this.types) {
-          if (item1.registrationTypeId === item2.id) {
-            item1.registrationName = item2.registrationName;
-          }
-        }
-      }
-      temp = this.history;
-      return temp;
-    },
   },
   mounted() {
     this.appointment();
+    this.countdown();
+  },
+
+  computed: {
+    countdown1: function () {
+      let temp = [];
+      for (let item of this.history) {
+        if (item.lastTime === 0) {
+          temp.push("00:00");
+        } else {
+          let minutes = Math.floor(item.lastTime / 60);
+          let seconds = Math.floor(item.lastTime % 60);
+          minutes = minutes < 10 ? "0" + minutes : minutes;
+          seconds = seconds < 10 ? "0" + seconds : seconds;
+          temp.push(minutes + ":" + seconds);
+        }
+      }
+      return temp;
+    },
   },
   methods: {
+    goPay(item) {
+      console.log(item.gopay);
+      item.gopay = true;
+    },
+    addStatus() {
+      for (let item of this.history) {
+        item.gopay = false;
+      }
+    },
+    countdown() {
+      for (let item of this.history) {
+        const interval = setInterval(() => {
+          if (item.lastTime !== 0) item.lastTime--;
+          // let minutes = Math.floor(item.lastTime / 60);
+          // let seconds = Math.floor(item.lastTime % 60);
+          // minutes = minutes < 10 ? "0" + minutes : minutes;
+          // seconds = seconds < 10 ? "0" + seconds : seconds;
+          // item.countDown = minutes + ":" + seconds;
+          this.appointment();
+          if (item.lastTime === 0) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      }
+      // this.interval = setInterval(() => {
+      //   for (let item of this.history) {
+      //     item.lastTime--;
+      //     let minutes = Math.floor(item.lastTime / 60);
+      //     let seconds = Math.floor(item.lastTime % 60);
+      //     minutes = minutes < 10 ? "0" + minutes : minutes;
+      //     seconds = seconds < 10 ? "0" + seconds : seconds;
+      //     item.countDown = minutes + ":" + seconds;
+      //     if (item.lastTime === 0) {
+      //       clearInterval(this.interval);
+      //     }
+      //   }
+      // }, 1000);
+    },
     workTypes() {
       http({
         url: "/doctor/registration/query",
@@ -143,28 +222,101 @@ export default {
         });
     },
     appointment() {
+      // this.addStatus();
       http({
         url: "/patient/query/patient/appointment",
         method: "get",
       })
         .then((response) => {
+          console.log(response.data);
           this.history = response.data.data;
+          console.log(this.countdown1);
+          // this.addStatus();
         })
         .catch((error) => {
           console.log(error);
         });
     },
-    cancel() {
+    cancel(item) {
+      this.$store.commit("getInformation2", item);
+      this.$store.commit("checkId");
+      console.log(this.$store.state.tab.historyItem);
       http({
         url: "/patient/cancelPayment",
         method: "post",
-      });
+        data: {
+          choiceTime: item.registrationTime.slice(11, 22),
+          date: item.registrationTime.slice(0, 10),
+          doctorId: this.$store.state.tab.historyItem.doctorId,
+          registrationTypeId: item.registrationTypes[0].id,
+          section: item.section,
+          oddNumber: item.oddNumber,
+        },
+      })
+        .then((response) => {
+          this.appointment();
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+          console.log(response);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
-    confirm() {
+    confirm(item) {
+      this.$store.commit("getInformation2", item);
+      this.$store.commit("checkId");
+      // this.getDoctorid(item.doctorName);
+      // console.log(
+      //   item.registrationTime.slice(11, 22),
+      //   item.registrationTime.slice(0, 10),
+      //   item.registrationTypes[0].id
+      // );
       http({
         url: "/patient/confirmPayment",
         method: "post",
-      });
+        data: {
+          choiceTime: item.registrationTime.slice(11, 22),
+          date: item.registrationTime.slice(0, 10),
+          doctorId: this.$store.state.tab.historyItem.doctorId,
+          registrationTypeId: item.registrationTypes[0].id,
+          section: item.section,
+          oddNumber: item.oddNumber,
+        },
+      })
+        .then((response) => {
+          this.appointment();
+          if (response.data.code === 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "success",
+              duration: 1500,
+            });
+          }
+          if (response.data.code !== 200) {
+            this.$message({
+              message: response.data.msg,
+              type: "warning",
+              duration: 1500,
+            });
+          }
+          console.log(response);
+        })
+        .catch((error) => {
+          console.lof(error);
+        });
     },
   },
 };
@@ -177,8 +329,8 @@ export default {
   flex-wrap: wrap;
   align-content: flex-start;
   .el-card {
-    height: 300px;
-    width: 20%;
+    height: 340px;
+    width: 25%;
     margin: 10px 20px;
     display: flex;
     flex-direction: column;
